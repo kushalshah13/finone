@@ -13,6 +13,12 @@
       
       gtag('config', 'G-DCF58S10GZ');
     </script>
+    
+    <!-- Libraries for Excel and PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -139,6 +145,20 @@
         
         .upload-btn:hover {
             background: #f0f0f0;
+        }
+        
+        .api-info {
+            background: rgba(255,255,255,0.1);
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 12px;
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+        
+        .api-info a {
+            color: white;
+            text-decoration: underline;
         }
         
         /* Input Sections */
@@ -702,11 +722,41 @@
         <div class="main-content">
             <div class="input-panel">
                 <!-- Document Upload Section -->
-                <div class="upload-section" onclick="handleUpload()">
-                    <h3>📄 Quick Start: Upload Documents</h3>
-                    <p>Bank statements, salary slips, insurance docs - we'll analyze and fill everything for you</p>
-                    <button class="upload-btn">Upload Documents (Coming Soon)</button>
-                    <p style="font-size: 0.75rem; margin-top: 8px;">Or fill the form below manually</p>
+                <div class="upload-section" id="uploadSection">
+                    <h3>📄 AI-Powered Document Analysis</h3>
+                    <p>Upload bank statements, salary slips, or insurance docs - AI will extract and fill everything</p>
+                    
+                    <div class="input-group" style="margin-top: 16px;">
+                        <div class="input-label" style="color: white;">
+                            <span>Your Claude API Key (Required for AI)</span>
+                            <span class="info-icon" style="border-color: white; color: white;">i</span>
+                            <div class="tooltip">Get your API key from console.anthropic.com. It's stored only in your browser session and never sent to our servers. Free tier includes $5 credit.</div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="password" id="apiKey" placeholder="sk-ant-..." style="flex: 1; background: white; color: #333;">
+                            <button class="upload-btn" onclick="clearAPIKey()" style="padding: 10px 16px; background: #dc3545; color: white;">
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 16px;">
+                        <input type="file" id="fileUpload" multiple accept=".pdf,.png,.jpg,.jpeg" style="display: none;" onchange="handleFileSelect(event)">
+                        <button class="upload-btn" onclick="document.getElementById('fileUpload').click()">
+                            📎 Upload Documents
+                        </button>
+                    </div>
+                    
+                    <div id="uploadedFiles" style="margin-top: 12px; font-size: 0.85rem;"></div>
+                    <div id="analysisStatus" style="margin-top: 12px; font-size: 0.85rem; font-weight: 600;"></div>
+                    
+                    <div class="api-info">
+                        🔒 <strong>Privacy:</strong> Your API key is stored only in your browser session (cleared when you close the tab). 
+                        Documents are sent directly to Anthropic's API, not stored on our servers. 
+                        <a href="https://console.anthropic.com" target="_blank">Get API key here</a>
+                    </div>
+                    
+                    <p style="font-size: 0.75rem; margin-top: 8px; opacity: 0.9;">Or fill the form below manually</p>
                 </div>
                 
                 <!-- Basic Information -->
@@ -1004,12 +1054,32 @@
                 </div>
                 
                 <button class="calculate-btn" onclick="calculatePlan()">🚀 Generate Financial Plan</button>
+                
+                <button class="calculate-btn" onclick="loadDemoData()" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); margin-top: 10px; font-size: 0.9rem; padding: 10px;">
+                    🎯 Load Demo Data (For Testing)
+                </button>
             </div>
             
             <div class="output-panel" id="outputPanel">
                 <div style="text-align: center; padding: 60px 20px; color: #6c757d;">
-                    <h2 style="font-size: 2rem; margin-bottom: 12px;">👋 Welcome to FinOne!</h2>
-                    <p style="font-size: 1.1rem; line-height: 1.6;">Upload your financial documents for instant AI analysis,<br>or fill in the form and click "Generate Financial Plan"</p>
+                    <h2 style="font-size: 2rem; margin-bottom: 16px;">👋 Welcome to FinOne AI!</h2>
+                    <p style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 24px;">
+                        <strong>Two ways to start:</strong><br>
+                        <span style="font-size: 1rem;">1. 🤖 Upload documents + API key for AI auto-fill<br>
+                        2. ✍️ Fill the form manually</span>
+                    </p>
+                    
+                    <div style="background: #f0f4ff; border-radius: 12px; padding: 20px; margin: 24px auto; max-width: 500px; text-align: left;">
+                        <div style="font-weight: 600; color: #667eea; margin-bottom: 12px; font-size: 1.05rem;">🚀 AI-Powered Features:</div>
+                        <ul style="margin-left: 20px; line-height: 1.8; font-size: 0.95rem; color: #495057;">
+                            <li>📄 Document upload & auto-extraction</li>
+                            <li>🎯 Personalized allocation advice</li>
+                            <li>💬 AI financial advisor chat</li>
+                            <li>📊 Detailed health score analysis</li>
+                            <li>🔄 Smart scenario planning</li>
+                        </ul>
+                    </div>
+                    
                     <div style="margin-top: 30px; font-size: 3rem; opacity: 0.3;">📊💰🎯</div>
                 </div>
             </div>
@@ -1049,6 +1119,11 @@
                     <p>4. Prepay loans aggressively to reduce interest burden</p>
                     <p>5. Diversify into direct equity and real estate over time</p>
                 </div>
+                
+                <button class="calculate-btn" onclick="getAIHealthInsights()" style="margin-top: 20px;">
+                    🤖 Get AI-Powered Detailed Health Analysis
+                </button>
+                <div id="aiHealthInsights" style="margin-top: 16px;"></div>
             </div>
         </div>
     </div>
@@ -1056,8 +1131,617 @@
     <script>
         let currentResults = null;
         
-        function handleUpload() {
-            alert('📄 AI Document Analysis coming in Phase 2!\n\nSoon you\'ll be able to upload:\n• Bank statements\n• Salary slips\n• Insurance documents\n• Investment statements\n\nAI will analyze and auto-fill everything for you!');
+        let uploadedDocuments = [];
+        let extractedData = {};
+        
+        function clearAPIKey() {
+            document.getElementById('apiKey').value = '';
+            sessionStorage.removeItem('claude_api_key');
+            chatHistory = [];
+            alert('✅ API key cleared from browser session.');
+        }
+        
+        // Load API key from session if exists
+        window.addEventListener('load', function() {
+            // Check for API key in URL parameter (for easy personal use)
+            const urlParams = new URLSearchParams(window.location.search);
+            const keyFromUrl = urlParams.get('key');
+            
+            if (keyFromUrl) {
+                sessionStorage.setItem('claude_api_key', keyFromUrl);
+                document.getElementById('apiKey').value = keyFromUrl;
+                // Remove key from URL for privacy
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else {
+                // Load from session if exists
+                const savedKey = sessionStorage.getItem('claude_api_key');
+                if (savedKey) {
+                    document.getElementById('apiKey').value = savedKey;
+                }
+            }
+        });
+        
+        // Save API key to session when user types
+        document.addEventListener('DOMContentLoaded', function() {
+            const apiKeyInput = document.getElementById('apiKey');
+            if (apiKeyInput) {
+                apiKeyInput.addEventListener('change', function() {
+                    const key = this.value.trim();
+                    if (key) {
+                        sessionStorage.setItem('claude_api_key', key);
+                    }
+                });
+            }
+        });
+        
+        function loadDemoData() {
+            document.getElementById('age').value = 34;
+            document.getElementById('retirementAge').value = 60;
+            document.getElementById('annualSalary').value = 4500000;
+            document.getElementById('monthlySIP').value = 100000;
+            document.getElementById('sipStepup').value = 10;
+            document.getElementById('sipPortfolio').value = 3500000;
+            document.getElementById('monthlyExpenses').value = 80000;
+            document.getElementById('homeLoan').value = 10000000;
+            document.getElementById('loanRate').value = 8.5;
+            document.getElementById('homeLoanPrepay').value = 240000;
+            document.getElementById('bankBalance').value = 500000;
+            document.getElementById('directEquity').value = 1000000;
+            document.getElementById('realEstate').value = 0;
+            document.getElementById('lifeInsurance').value = 10000000;
+            document.getElementById('insurancePremium').value = 35000;
+            document.getElementById('childAge').value = 4;
+            document.getElementById('educationCostCurrent').value = 200000;
+            document.getElementById('holidayBudget').value = 300000;
+            document.getElementById('sipReturn').value = 12;
+            document.getElementById('directEquityReturn').value = 14;
+            document.getElementById('realEstateReturn').value = 8;
+            document.getElementById('liquidReturn').value = 7;
+            document.getElementById('expenseInflation').value = 6;
+            document.getElementById('postRetirementReturn').value = 8;
+            
+            // Trigger auto-calculations
+            updateEmergencyTarget();
+            updateInsuranceNeeded();
+            
+            alert('✅ Demo data loaded! Click "Generate Financial Plan" to see results.');
+        }
+        
+        function downloadExcelReport() {
+            if (!currentResults) {
+                alert('Please generate your financial plan first!');
+                return;
+            }
+            
+            const wb = XLSX.utils.book_new();
+            const results = currentResults;
+            const inputs = results.inputs;
+            
+            // Summary Sheet
+            const summaryData = [
+                ['COMPREHENSIVE FINANCIAL PLAN'],
+                ['Generated on: ' + new Date().toLocaleDateString()],
+                [],
+                ['EXECUTIVE SUMMARY'],
+                ['Current Age', inputs.age],
+                ['Retirement Age', inputs.retirementAge],
+                ['Years to Retirement', inputs.retirementAge - inputs.age],
+                ['Financial Health Score', results.healthScore + '/100'],
+                [],
+                ['CURRENT POSITION'],
+                ['Total Assets', results.inputs.sipPortfolio + results.inputs.directEquity + results.inputs.realEstate + results.inputs.bankBalance],
+                ['Total Liabilities', results.inputs.homeLoan],
+                ['Net Worth', (results.inputs.sipPortfolio + results.inputs.directEquity + results.inputs.realEstate + results.inputs.bankBalance) - results.inputs.homeLoan],
+                [],
+                ['RETIREMENT PROJECTION'],
+                ['Portfolio at Retirement', results.finalPortfolio],
+                ['Corpus Required', results.corpusNeeded],
+                ['Surplus/Gap', results.gap],
+                ['Status', results.gap >= 0 ? 'ON TRACK' : 'NEEDS ADJUSTMENT'],
+                [],
+                ['CRITICAL GAPS'],
+                ['Emergency Fund Gap', results.emergencyGap],
+                ['Insurance Gap', results.insuranceGap]
+            ];
+            const ws_summary = XLSX.utils.aoa_to_sheet(summaryData);
+            XLSX.utils.book_append_sheet(wb, ws_summary, 'Summary');
+            
+            // Year by Year Projection
+            const projectionHeaders = [['Year', 'Age', 'SIP Portfolio', 'Direct Equity', 'Real Estate', 'Liquid/Debt', 'Home Loan', 'Annual Expenses', 'Total Portfolio']];
+            const projectionData = results.projection.map(p => [
+                p.year,
+                p.age,
+                p.sipPortfolio,
+                p.directEquity,
+                p.realEstate,
+                p.liquid,
+                p.homeLoan,
+                p.expenses,
+                p.sipPortfolio + p.directEquity + p.realEstate + p.liquid
+            ]);
+            const ws_projection = XLSX.utils.aoa_to_sheet([...projectionHeaders, ...projectionData]);
+            XLSX.utils.book_append_sheet(wb, ws_projection, 'Year-by-Year');
+            
+            // Asset Breakdown Sheet
+            const finalYear = results.projection[results.projection.length - 1];
+            const assetData = [
+                ['PORTFOLIO BREAKDOWN AT RETIREMENT'],
+                [],
+                ['Asset Class', 'Value', 'Percentage'],
+                ['SIP/Mutual Funds', finalYear.sipPortfolio, ((finalYear.sipPortfolio / results.finalPortfolio) * 100).toFixed(1) + '%'],
+                ['Direct Equity', finalYear.directEquity, ((finalYear.directEquity / results.finalPortfolio) * 100).toFixed(1) + '%'],
+                ['Real Estate', finalYear.realEstate, ((finalYear.realEstate / results.finalPortfolio) * 100).toFixed(1) + '%'],
+                ['Liquid/Debt', finalYear.liquid, ((finalYear.liquid / results.finalPortfolio) * 100).toFixed(1) + '%'],
+                [],
+                ['Total', results.finalPortfolio, '100%']
+            ];
+            const ws_assets = XLSX.utils.aoa_to_sheet(assetData);
+            XLSX.utils.book_append_sheet(wb, ws_assets, 'Asset Breakdown');
+            
+            // Recommendations Sheet
+            const recoData = [
+                ['ACTION PLAN'],
+                [],
+                ['IMMEDIATE ACTIONS (Next 30 Days)'],
+                ['1. Emergency Fund', 'Build ' + formatCurrency(results.emergencyGap) + ' emergency fund'],
+                ['2. Life Insurance', 'Get quotes for ' + formatCurrency(results.insuranceGap) + ' additional coverage'],
+                ['3. Loan Prepayment', 'Set up ' + formatCurrency(inputs.homeLoanPrepay) + ' annual prepayment'],
+                [],
+                ['ONGOING DISCIPLINE'],
+                ['SIP Increase', 'Increase by ' + (inputs.sipStepup * 100).toFixed(0) + '% annually'],
+                ['Portfolio Review', 'Rebalance every 6 months'],
+                ['Tax Optimization', 'Maximize 80C, 80D, 80CCD(1B)']
+            ];
+            const ws_reco = XLSX.utils.aoa_to_sheet(recoData);
+            XLSX.utils.book_append_sheet(wb, ws_reco, 'Recommendations');
+            
+            // Download
+            XLSX.writeFile(wb, 'Financial_Health_Report_' + new Date().toISOString().split('T')[0] + '.xlsx');
+        }
+        
+        function downloadPDFReport() {
+            if (!currentResults) {
+                alert('Please generate your financial plan first!');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const results = currentResults;
+            const inputs = results.inputs;
+            
+            let yPos = 20;
+            
+            // Title
+            doc.setFontSize(20);
+            doc.setTextColor(15, 76, 117);
+            doc.text('COMPREHENSIVE FINANCIAL PLAN', 105, yPos, { align: 'center' });
+            
+            yPos += 10;
+            doc.setFontSize(12);
+            doc.setTextColor(100);
+            doc.text('Financial Health Analysis & Retirement Planning', 105, yPos, { align: 'center' });
+            
+            yPos += 8;
+            doc.setFontSize(10);
+            doc.text('Generated: ' + new Date().toLocaleDateString(), 105, yPos, { align: 'center' });
+            
+            // Executive Summary
+            yPos += 15;
+            doc.setFontSize(14);
+            doc.setTextColor(0);
+            doc.text('EXECUTIVE SUMMARY', 20, yPos);
+            
+            yPos += 10;
+            doc.setFontSize(10);
+            doc.setTextColor(60);
+            
+            const totalAssets = inputs.sipPortfolio + inputs.directEquity + inputs.realEstate + inputs.bankBalance;
+            const netWorth = totalAssets - inputs.homeLoan;
+            
+            doc.text(`Current Net Worth: ${formatCurrency(netWorth)}`, 20, yPos);
+            yPos += 6;
+            doc.text(`Total Assets: ${formatCurrency(totalAssets)}`, 20, yPos);
+            yPos += 6;
+            doc.text(`Projected at Age ${inputs.retirementAge}: ${formatCurrency(results.finalPortfolio)}`, 20, yPos);
+            yPos += 6;
+            doc.text(`Status: ${results.gap >= 0 ? 'ON TRACK for retirement' : 'NEEDS ADJUSTMENT'}`, 20, yPos);
+            yPos += 6;
+            doc.text(`Financial Health Score: ${results.healthScore}/100`, 20, yPos);
+            
+            // Current Financial Position
+            yPos += 15;
+            doc.setFontSize(14);
+            doc.setTextColor(0);
+            doc.text('CURRENT FINANCIAL POSITION', 20, yPos);
+            
+            yPos += 10;
+            doc.autoTable({
+                startY: yPos,
+                head: [['Category', 'Amount', 'Percentage']],
+                body: [
+                    ['SIP/Mutual Funds', formatCurrency(inputs.sipPortfolio), ((inputs.sipPortfolio / totalAssets) * 100).toFixed(1) + '%'],
+                    ['Direct Equity', formatCurrency(inputs.directEquity), ((inputs.directEquity / totalAssets) * 100).toFixed(1) + '%'],
+                    ['Real Estate', formatCurrency(inputs.realEstate), ((inputs.realEstate / totalAssets) * 100).toFixed(1) + '%'],
+                    ['Cash & Liquid', formatCurrency(inputs.bankBalance), ((inputs.bankBalance / totalAssets) * 100).toFixed(1) + '%'],
+                    ['TOTAL ASSETS', formatCurrency(totalAssets), '100%'],
+                    ['', '', ''],
+                    ['Home Loan', formatCurrency(inputs.homeLoan), '-'],
+                    ['NET WORTH', formatCurrency(netWorth), '-']
+                ],
+                theme: 'grid',
+                headStyles: { fillColor: [15, 76, 117] },
+                margin: { left: 20, right: 20 }
+            });
+            
+            yPos = doc.lastAutoTable.finalY + 15;
+            
+            // Retirement Projection
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            
+            doc.setFontSize(14);
+            doc.setTextColor(0);
+            doc.text('RETIREMENT PROJECTION', 20, yPos);
+            
+            yPos += 10;
+            doc.autoTable({
+                startY: yPos,
+                head: [['Metric', 'Value']],
+                body: [
+                    ['Years to Retirement', (inputs.retirementAge - inputs.age).toString()],
+                    ['Monthly Expenses at ' + inputs.retirementAge, formatCurrency(results.monthlyExpensesAt60)],
+                    ['Annual Expenses at ' + inputs.retirementAge, formatCurrency(results.annualExpensesAt60)],
+                    ['Corpus Required (25 years)', formatCurrency(results.corpusNeeded)],
+                    ['Projected Portfolio', formatCurrency(results.finalPortfolio)],
+                    ['Surplus/Gap', formatCurrency(Math.abs(results.gap))],
+                    ['Status', results.gap >= 0 ? `✓ Surplus ${results.gapPercent.toFixed(1)}%` : `⚠ Shortfall ${Math.abs(results.gapPercent).toFixed(1)}%`]
+                ],
+                theme: 'grid',
+                headStyles: { fillColor: [15, 76, 117] },
+                margin: { left: 20, right: 20 }
+            });
+            
+            yPos = doc.lastAutoTable.finalY + 15;
+            
+            // Critical Gaps
+            if (yPos > 220) {
+                doc.addPage();
+                yPos = 20;
+            }
+            
+            doc.setFontSize(14);
+            doc.setTextColor(220, 53, 69);
+            doc.text('CRITICAL GAPS & RISKS', 20, yPos);
+            
+            yPos += 10;
+            const gapsData = [];
+            
+            if (results.emergencyGap > 0) {
+                gapsData.push(['Emergency Fund Gap', formatCurrency(results.emergencyGap), 'URGENT']);
+                gapsData.push(['Current', formatCurrency(inputs.bankBalance), '']);
+                gapsData.push(['Required', formatCurrency(inputs.emergencyTarget), '']);
+                gapsData.push(['', '', '']);
+            }
+            
+            if (results.insuranceGap > 0) {
+                gapsData.push(['Life Insurance Gap', formatCurrency(results.insuranceGap), 'URGENT']);
+                gapsData.push(['Current Coverage', formatCurrency(inputs.lifeInsurance), '']);
+                gapsData.push(['Recommended', formatCurrency(inputs.insuranceNeeded), '']);
+            }
+            
+            if (gapsData.length > 0) {
+                doc.autoTable({
+                    startY: yPos,
+                    head: [['Gap Type', 'Amount', 'Priority']],
+                    body: gapsData,
+                    theme: 'grid',
+                    headStyles: { fillColor: [220, 53, 69] },
+                    margin: { left: 20, right: 20 }
+                });
+            } else {
+                doc.setFontSize(10);
+                doc.setTextColor(40, 167, 69);
+                doc.text('✓ No critical gaps identified. Excellent financial position!', 20, yPos);
+            }
+            
+            // Download
+            doc.save('Financial_Plan_Report_' + new Date().toISOString().split('T')[0] + '.pdf');
+        }
+        
+        async function handleFileSelect(event) {
+            const files = event.target.files;
+            if (files.length === 0) return;
+            
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (!apiKey) {
+                alert('⚠️ Please enter your Claude API key first!\n\nGet it from: console.anthropic.com\n\nFree tier includes $5 credit.');
+                return;
+            }
+            
+            // Store API key in session
+            sessionStorage.setItem('claude_api_key', apiKey);
+            
+            // Show upload status
+            const statusDiv = document.getElementById('analysisStatus');
+            const filesDiv = document.getElementById('uploadedFiles');
+            
+            filesDiv.innerHTML = `<div style="color: white;">📁 ${files.length} file(s) selected</div>`;
+            statusDiv.innerHTML = `<div style="color: white;">⏳ Analyzing documents with AI...</div>`;
+            
+            try {
+                // Convert files to base64
+                const documentsData = await Promise.all(
+                    Array.from(files).map(file => fileToBase64(file))
+                );
+                
+                uploadedDocuments = documentsData;
+                
+                // Analyze with Claude
+                await analyzeDocumentsWithAI(documentsData);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                statusDiv.innerHTML = `<div style="color: #ffcccc;">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const base64 = reader.result.split(',')[1];
+                    resolve({
+                        name: file.name,
+                        type: file.type,
+                        data: base64
+                    });
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        async function analyzeDocumentsWithAI(documents) {
+            const apiKey = sessionStorage.getItem('claude_api_key');
+            const statusDiv = document.getElementById('analysisStatus');
+            
+            // Prepare content for Claude
+            const content = [
+                {
+                    type: "text",
+                    text: `You are a financial planning assistant. Analyze these documents and extract financial information.
+
+Extract the following data if available:
+- Annual salary/income
+- Monthly expenses (recurring payments, utilities, etc.)
+- Current SIP/mutual fund investments and amounts
+- Bank balance and liquid funds
+- Home loan details (outstanding amount, interest rate, EMI)
+- Direct equity holdings
+- Real estate investments
+- Life insurance coverage
+- Education expenses for children
+- Any other relevant financial data
+
+Respond ONLY with a JSON object (no markdown, no backticks) with these exact keys:
+{
+  "annualSalary": number or null,
+  "monthlyExpenses": number or null,
+  "sipPortfolio": number or null,
+  "monthlySIP": number or null,
+  "bankBalance": number or null,
+  "homeLoan": number or null,
+  "loanRate": number or null,
+  "directEquity": number or null,
+  "realEstate": number or null,
+  "lifeInsurance": number or null,
+  "educationCostCurrent": number or null,
+  "age": number or null,
+  "questions": ["array of follow-up questions for missing critical data"],
+  "summary": "brief summary of financial situation"
+}
+
+If you can't find a value, use null. Ask specific questions for critical missing data.`
+                }
+            ];
+            
+            // Add documents as images
+            for (const doc of documents) {
+                const mediaType = doc.type.includes('pdf') ? 'application/pdf' : doc.type;
+                content.push({
+                    type: doc.type.includes('pdf') ? 'document' : 'image',
+                    source: {
+                        type: 'base64',
+                        media_type: mediaType,
+                        data: doc.data
+                    }
+                });
+            }
+            
+            try {
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey,
+                        'anthropic-version': '2023-06-01'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 2000,
+                        messages: [{
+                            role: 'user',
+                            content: content
+                        }]
+                    })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error?.message || 'API request failed');
+                }
+                
+                const data = await response.json();
+                const textContent = data.content.find(c => c.type === 'text')?.text || '';
+                
+                // Parse JSON response
+                const jsonMatch = textContent.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) {
+                    throw new Error('Could not parse AI response');
+                }
+                
+                extractedData = JSON.parse(jsonMatch[0]);
+                
+                // Auto-fill form
+                autoFillForm(extractedData);
+                
+                // Show results
+                statusDiv.innerHTML = `<div style="color: #90EE90;">✅ Analysis complete! Form auto-filled.</div>`;
+                
+                // Show summary and questions
+                showAnalysisSummary(extractedData);
+                
+            } catch (error) {
+                throw new Error(`AI Analysis failed: ${error.message}`);
+            }
+        }
+        
+        function autoFillForm(data) {
+            // Fill in extracted values
+            if (data.age) document.getElementById('age').value = data.age;
+            if (data.annualSalary) document.getElementById('annualSalary').value = data.annualSalary;
+            if (data.monthlyExpenses) document.getElementById('monthlyExpenses').value = data.monthlyExpenses;
+            if (data.sipPortfolio) document.getElementById('sipPortfolio').value = data.sipPortfolio;
+            if (data.monthlySIP) document.getElementById('monthlySIP').value = data.monthlySIP;
+            if (data.bankBalance) document.getElementById('bankBalance').value = data.bankBalance;
+            if (data.homeLoan) document.getElementById('homeLoan').value = data.homeLoan;
+            if (data.loanRate) document.getElementById('loanRate').value = data.loanRate;
+            if (data.directEquity) document.getElementById('directEquity').value = data.directEquity;
+            if (data.realEstate) document.getElementById('realEstate').value = data.realEstate;
+            if (data.lifeInsurance) document.getElementById('lifeInsurance').value = data.lifeInsurance;
+            if (data.educationCostCurrent) document.getElementById('educationCostCurrent').value = data.educationCostCurrent;
+            
+            // Trigger auto-calculations for derived fields
+            updateEmergencyTarget();
+            updateInsuranceNeeded();
+            
+            // Highlight auto-filled fields
+            const filledFields = document.querySelectorAll('input[type="number"]');
+            filledFields.forEach(field => {
+                if (field.value && !field.readOnly) {
+                    field.style.background = '#e7ffe7';
+                    field.style.borderColor = '#28a745';
+                }
+            });
+        }
+        
+        function showAnalysisSummary(data) {
+            const outputPanel = document.getElementById('outputPanel');
+            
+            let questionsHTML = '';
+            if (data.questions && data.questions.length > 0) {
+                questionsHTML = `
+                    <div class="alert alert-warning" style="margin-top: 20px;">
+                        <strong>🤔 AI needs more information:</strong>
+                        <ul style="margin-top: 10px; margin-left: 20px;">
+                            ${data.questions.map(q => `<li style="margin-bottom: 6px;">${q}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            outputPanel.innerHTML = `
+                <div class="metric-card" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <h2>✅ AI Analysis Complete!</h2>
+                    <div class="subtitle" style="font-size: 1rem; margin-top: 10px;">${data.summary || 'Documents analyzed and form auto-filled'}</div>
+                </div>
+                
+                <div class="alert alert-success">
+                    <strong>📊 Extracted Data:</strong>
+                    <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 0.9rem;">
+                        ${data.annualSalary ? `<div>• Annual Salary: ₹${data.annualSalary.toLocaleString()}</div>` : ''}
+                        ${data.monthlyExpenses ? `<div>• Monthly Expenses: ₹${data.monthlyExpenses.toLocaleString()}</div>` : ''}
+                        ${data.sipPortfolio ? `<div>• SIP Portfolio: ₹${data.sipPortfolio.toLocaleString()}</div>` : ''}
+                        ${data.bankBalance ? `<div>• Bank Balance: ₹${data.bankBalance.toLocaleString()}</div>` : ''}
+                        ${data.homeLoan ? `<div>• Home Loan: ₹${data.homeLoan.toLocaleString()}</div>` : ''}
+                        ${data.lifeInsurance ? `<div>• Life Insurance: ₹${data.lifeInsurance.toLocaleString()}</div>` : ''}
+                    </div>
+                </div>
+                
+                ${questionsHTML}
+                
+                <div class="action-item high" style="margin-top: 20px;">
+                    <strong>👉 Next Steps:</strong>
+                    <p>1. Review the auto-filled values (highlighted in green)</p>
+                    <p>2. Fill in any missing required fields</p>
+                    <p>3. Answer the AI's questions above if any</p>
+                    <p>4. Click "Generate Financial Plan" to see your complete analysis</p>
+                </div>
+            `;
+        }
+        
+        async function askAIForRecommendations() {
+            const apiKey = sessionStorage.getItem('claude_api_key');
+            if (!apiKey) {
+                alert('Please enter your API key and upload documents first.');
+                return;
+            }
+            
+            const inputs = getInputs();
+            const yearsToRetirement = inputs.retirementAge - inputs.age;
+            
+            const prompt = `You are a financial advisor. Based on this profile, provide personalized investment allocation recommendations:
+
+Profile:
+- Age: ${inputs.age}, Retirement: ${inputs.retirementAge} (${yearsToRetirement} years)
+- Annual Salary: ₹${inputs.annualSalary}
+- Monthly Expenses: ₹${inputs.monthlyExpenses}
+- Current Portfolio: SIP ₹${inputs.sipPortfolio}, Equity ₹${inputs.directEquity}, RE ₹${inputs.realEstate}
+- Liabilities: Home Loan ₹${inputs.homeLoan}
+- Risk: ${yearsToRetirement > 20 ? 'High (long horizon)' : yearsToRetirement > 10 ? 'Moderate' : 'Conservative (near retirement)'}
+
+Provide:
+1. Recommended allocation percentages for surplus savings (Equity/Real Estate/Debt)
+2. Specific investment suggestions (fund types, real estate strategy, etc.)
+3. Risk assessment and why this allocation suits their profile
+4. 2-3 key action items
+
+Keep response under 300 words, practical and actionable.`;
+            
+            try {
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey,
+                        'anthropic-version': '2023-06-01'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 1000,
+                        messages: [{
+                            role: 'user',
+                            content: prompt
+                        }]
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('API request failed');
+                }
+                
+                const data = await response.json();
+                const recommendation = data.content.find(c => c.type === 'text')?.text || '';
+                
+                return recommendation;
+                
+            } catch (error) {
+                console.error('Error getting AI recommendations:', error);
+                return null;
+            }
         }
         
         function closeModal() {
@@ -1317,6 +2001,7 @@
                     <div class="tab ${tab === 'gaps' ? 'active' : ''}" onclick="displayResults('gaps')">⚠️ Gaps</div>
                     <div class="tab ${tab === 'actions' ? 'active' : ''}" onclick="displayResults('actions')">✅ Actions</div>
                     <div class="tab ${tab === 'scenarios' ? 'active' : ''}" onclick="displayResults('scenarios')">🔄 Scenarios</div>
+                    <div class="tab ${tab === 'ai-advisor' ? 'active' : ''}" onclick="displayResults('ai-advisor')">🤖 AI Advisor</div>
                 </div>
                 
                 <div id="tabContent"></div>
@@ -1443,6 +2128,10 @@
                         <div class="action-item high" style="margin-top: 16px;">
                             <strong>Why This Mix?</strong>
                             <p>This 50-30-20 allocation balances growth (equity), stability (real estate), and safety (debt). You can experiment with different allocations in the "Scenarios" tab to see the impact on your retirement corpus.</p>
+                            <button class="upload-btn" onclick="getAIAllocationAdvice()" style="margin-top: 12px; width: auto; padding: 10px 20px; font-size: 0.9rem;">
+                                🤖 Get AI Personalized Allocation Advice
+                            </button>
+                            <div id="aiAdvice" style="margin-top: 12px;"></div>
                         </div>
                     ` : netSavingsAvailable < 0 ? `
                         <div class="alert alert-danger" style="margin-top: 25px;">
@@ -1492,6 +2181,15 @@
                             <p>Increase SIP, extend working years, or reduce retirement expenses to close this gap.</p>
                         </div>
                     `}
+                    
+                    <div style="display: flex; gap: 12px; margin-top: 20px;">
+                        <button class="calculate-btn" onclick="downloadExcelReport()" style="flex: 1; background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                            📊 Download Excel Report
+                        </button>
+                        <button class="calculate-btn" onclick="downloadPDFReport()" style="flex: 1; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+                            📄 Download PDF Report
+                        </button>
+                    </div>
                 `;
             } else if (tab === 'retirement') {
                 const finalYear = results.projection[results.projection.length - 1];
@@ -1820,6 +2518,160 @@
                 
                 // Initialize allocation preview
                 updateAllocationPreview(netSavingsAvailable);
+            } else if (tab === 'ai-advisor') {
+                tabContent.innerHTML = `
+                    <h2 class="section-title">🤖 AI Financial Advisor</h2>
+                    <p style="margin-bottom: 20px; color: #6c757d;">Ask anything about your financial plan, investment strategies, or specific scenarios.</p>
+                    
+                    <div class="alert alert-success" style="background: #f0f4ff; border-color: #667eea;">
+                        <strong>💡 Example Questions You Can Ask:</strong>
+                        <ul style="margin-top: 10px; margin-left: 20px; font-size: 0.9rem;">
+                            <li>Should I prioritize loan prepayment or increase my SIP?</li>
+                            <li>What happens if I retire 5 years early?</li>
+                            <li>How much life insurance do I really need and why?</li>
+                            <li>What's the best way to invest my bonus this year?</li>
+                            <li>Should I buy another property or invest in equities?</li>
+                        </ul>
+                    </div>
+                    
+                    <div id="chatMessages" style="background: #f8f9fa; border-radius: 12px; padding: 20px; min-height: 300px; max-height: 500px; overflow-y: auto; margin-bottom: 16px;">
+                        <div style="text-align: center; color: #6c757d; padding: 40px 20px;">
+                            <div style="font-size: 2.5rem; margin-bottom: 12px;">🤖</div>
+                            <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 8px;">Your AI Financial Advisor is Ready</div>
+                            <div style="font-size: 0.9rem;">Ask me anything about your financial plan!</div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="chatInput" placeholder="Ask your question..." 
+                            style="flex: 1; padding: 12px; border: 2px solid #dee2e6; border-radius: 8px; font-size: 0.95rem;"
+                            onkeypress="if(event.key === 'Enter') sendChatMessage()">
+                        <button class="upload-btn" onclick="sendChatMessage()" style="padding: 12px 24px;">
+                            Send
+                        </button>
+                    </div>
+                    
+                    ${!sessionStorage.getItem('claude_api_key') ? `
+                        <div class="alert alert-warning" style="margin-top: 16px;">
+                            <strong>⚠️ API Key Required</strong>
+                            <p>Please enter your Claude API key in the upload section above to use the AI Advisor.</p>
+                        </div>
+                    ` : ''}
+                `;
+            }
+        }
+        
+        let chatHistory = [];
+        
+        async function sendChatMessage() {
+            const apiKey = sessionStorage.getItem('claude_api_key');
+            if (!apiKey) {
+                alert('⚠️ Please enter your Claude API key in the upload section first!\n\nGet it from: console.anthropic.com');
+                return;
+            }
+            
+            const input = document.getElementById('chatInput');
+            const question = input.value.trim();
+            if (!question) return;
+            
+            const messagesDiv = document.getElementById('chatMessages');
+            
+            // Add user message
+            messagesDiv.innerHTML += `
+                <div style="background: white; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid #667eea;">
+                    <div style="font-weight: 600; color: #667eea; margin-bottom: 4px;">You:</div>
+                    <div style="color: #495057;">${question}</div>
+                </div>
+            `;
+            
+            // Show typing indicator
+            messagesDiv.innerHTML += `
+                <div id="typing" style="background: #e9ecef; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid #28a745;">
+                    <div style="font-weight: 600; color: #28a745; margin-bottom: 4px;">AI Advisor:</div>
+                    <div style="color: #6c757d;">Thinking...</div>
+                </div>
+            `;
+            
+            input.value = '';
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            // Prepare context
+            const context = currentResults ? `
+Current Financial Profile:
+- Age: ${currentResults.inputs.age}, Retirement: ${currentResults.inputs.retirementAge}
+- Health Score: ${currentResults.healthScore}/100
+- Annual Income: ₹${currentResults.inputs.annualSalary}
+- Monthly Expenses: ₹${currentResults.inputs.monthlyExpenses}
+- Current Portfolio: ₹${currentResults.finalPortfolio}
+- Retirement Need: ₹${currentResults.corpusNeeded}
+- Gap/Surplus: ₹${currentResults.gap} (${currentResults.gap >= 0 ? 'surplus' : 'shortfall'})
+- Emergency Fund: ₹${currentResults.inputs.bankBalance} / ₹${currentResults.inputs.emergencyTarget}
+- Life Insurance: ₹${currentResults.inputs.lifeInsurance} / ₹${currentResults.inputs.insuranceNeeded}
+- Loans: ₹${currentResults.inputs.homeLoan}
+` : 'No financial plan generated yet. Please fill the form and generate a plan first.';
+            
+            const systemPrompt = `You are a certified financial planner helping a client. ${context}
+
+Answer their question with:
+1. Direct, actionable advice
+2. Specific numbers when relevant
+3. Trade-offs to consider
+4. One concrete next step
+
+Keep responses under 200 words, friendly and practical.`;
+            
+            try {
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey,
+                        'anthropic-version': '2023-06-01'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 800,
+                        system: systemPrompt,
+                        messages: [
+                            ...chatHistory,
+                            { role: 'user', content: question }
+                        ]
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('API request failed');
+                }
+                
+                const data = await response.json();
+                const answer = data.content.find(c => c.type === 'text')?.text || '';
+                
+                // Update chat history
+                chatHistory.push(
+                    { role: 'user', content: question },
+                    { role: 'assistant', content: answer }
+                );
+                
+                // Remove typing indicator and add response
+                document.getElementById('typing').remove();
+                messagesDiv.innerHTML += `
+                    <div style="background: #e9ecef; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid #28a745;">
+                        <div style="font-weight: 600; color: #28a745; margin-bottom: 4px;">AI Advisor:</div>
+                        <div style="color: #495057; white-space: pre-line; line-height: 1.6;">${answer}</div>
+                    </div>
+                `;
+                
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('typing').remove();
+                messagesDiv.innerHTML += `
+                    <div style="background: #f8d7da; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid #dc3545;">
+                        <div style="font-weight: 600; color: #dc3545; margin-bottom: 4px;">Error:</div>
+                        <div style="color: #721c24;">Failed to get response. Please check your API key.</div>
+                    </div>
+                `;
             }
         }
         
@@ -1847,6 +2699,107 @@
                         <p><strong>${currentResults.gap >= 0 ? 'Surplus' : 'Shortfall'}: ${formatCurrency(Math.abs(currentResults.gap))} (${Math.abs(currentResults.gapPercent).toFixed(1)}%)</strong></p>
                     </div>
                 `;
+            }
+        }
+        
+        async function getAIHealthInsights() {
+            const apiKey = sessionStorage.getItem('claude_api_key');
+            if (!apiKey) {
+                alert('⚠️ Please enter your Claude API key in the upload section first!\n\nGet it from: console.anthropic.com');
+                return;
+            }
+            
+            if (!currentResults) {
+                alert('Please generate your financial plan first!');
+                return;
+            }
+            
+            const insightsDiv = document.getElementById('aiHealthInsights');
+            insightsDiv.innerHTML = '<div style="color: #667eea; font-weight: 600; text-align: center;">⏳ AI is analyzing your financial health in detail...</div>';
+            
+            const inputs = currentResults.inputs;
+            const results = currentResults;
+            
+            const prompt = `You are a certified financial planner. Analyze this financial profile and provide detailed insights:
+
+Financial Health Score: ${results.healthScore}/100
+
+Profile:
+- Age: ${inputs.age}, Retirement Target: ${inputs.retirementAge}
+- Income: ₹${inputs.annualSalary}/year, Expenses: ₹${inputs.monthlyExpenses}/month
+- Investments: SIP ₹${inputs.sipPortfolio}, Equity ₹${inputs.directEquity}, RE ₹${inputs.realEstate}
+- Liabilities: Home Loan ₹${inputs.homeLoan} at ${(inputs.loanRate * 100).toFixed(1)}%
+- Protection: Life Insurance ₹${inputs.lifeInsurance} (needs ₹${inputs.insuranceNeeded})
+- Emergency Fund: ₹${inputs.bankBalance} (target ₹${inputs.emergencyTarget})
+- Retirement: Portfolio ₹${results.finalPortfolio} vs Need ₹${results.corpusNeeded} (${results.gap >= 0 ? 'surplus' : 'gap'} ₹${Math.abs(results.gap)})
+
+Provide:
+1. Top 3 strengths in their financial profile
+2. Top 3 areas of concern with specific impact
+3. Most critical action to take in next 30 days
+4. One contrarian/non-obvious insight based on their data
+
+Keep under 400 words. Be specific, actionable, and empathetic.`;
+            
+            try {
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey,
+                        'anthropic-version': '2023-06-01'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 1500,
+                        messages: [{
+                            role: 'user',
+                            content: prompt
+                        }]
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('API request failed');
+                }
+                
+                const data = await response.json();
+                const insights = data.content.find(c => c.type === 'text')?.text || '';
+                
+                insightsDiv.innerHTML = `
+                    <div class="score-item" style="background: #f0f4ff; border-color: #667eea; text-align: left;">
+                        <h4 style="color: #667eea; margin-bottom: 12px;">🤖 AI Detailed Analysis</h4>
+                        <div style="white-space: pre-line; line-height: 1.7; font-size: 0.9rem;">${insights}</div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error getting AI insights:', error);
+                insightsDiv.innerHTML = '<div style="color: #dc3545; text-align: center;">❌ Failed to get AI insights. Please check your API key and try again.</div>';
+            }
+        }
+        
+        async function getAIAllocationAdvice() {
+            const apiKey = sessionStorage.getItem('claude_api_key');
+            if (!apiKey) {
+                alert('⚠️ Please enter your Claude API key in the upload section first!\n\nGet it from: console.anthropic.com');
+                return;
+            }
+            
+            const adviceDiv = document.getElementById('aiAdvice');
+            adviceDiv.innerHTML = '<div style="color: #667eea; font-weight: 600;">⏳ AI is analyzing your profile and generating personalized advice...</div>';
+            
+            const recommendation = await askAIForRecommendations();
+            
+            if (recommendation) {
+                adviceDiv.innerHTML = `
+                    <div class="alert alert-success" style="margin-top: 0; background: #f0f4ff; border-color: #667eea;">
+                        <strong>🤖 AI Personalized Advice:</strong>
+                        <div style="margin-top: 10px; white-space: pre-line; line-height: 1.6; font-size: 0.9rem;">${recommendation}</div>
+                    </div>
+                `;
+            } else {
+                adviceDiv.innerHTML = '<div style="color: #dc3545;">❌ Failed to get AI recommendations. Please check your API key and try again.</div>';
             }
         }
         
