@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Planner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1F4E78 0%, #366092 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 0;
+            min-height: 700px;
+        }
+        
+        .input-panel {
+            background: #f8f9fa;
+            border-right: 2px solid #dee2e6;
+            padding: 25px;
+            overflow-y: auto;
+            max-height: 85vh;
+        }
+        
+        .output-panel {
+            padding: 25px;
+            overflow-y: auto;
+            max-height: 85vh;
+        }
+        
+        .input-section {
+            background: white;
+            padding: 18px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .input-section h3 {
+            color: #1F4E78;
+            margin-bottom: 12px;
+            font-size: 1rem;
+            border-bottom: 2px solid #1F4E78;
+            padding-bottom: 6px;
+        }
+        
+        .input-group {
+            margin-bottom: 12px;
+        }
+        
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #495057;
+            font-size: 0.85rem;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .calculate-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 18px;
+            text-align: center;
+        }
+        
+        .metric-card h2 {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+        
+        .metric-card .value {
+            font-size: 2.2rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .metric-card .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .result-card {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .result-card h4 {
+            color: #1F4E78;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .result-card .amount {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 4px;
+        }
+        
+        .result-card .description {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        .alert {
+            padding: 14px 18px;
+            border-radius: 8px;
+            margin-bottom: 14px;
+            border-left: 4px solid;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+        
+        .alert-danger {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        
+        .section-title {
+            color: #1F4E78;
+            font-size: 1.4rem;
+            margin: 25px 0 12px 0;
+            padding-bottom: 8px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            padding: 10px 18px;
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .tab-btn:hover {
+            border-color: #667eea;
+        }
+        
+        .action-list {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 18px;
+        }
+        
+        .action-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .action-item.urgent {
+            border-color: #dc3545;
+            background: #fff5f5;
+        }
+        
+        .action-item.high {
+            border-color: #ffc107;
+            background: #fffef5;
+        }
+        
+        .action-item strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.95rem;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 28px;
+            background: #e9ecef;
+            border-radius: 14px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+        
+        .welcome-screen {
+            text-align: center;
+            padding: 80px 20px;
+            color: #6c757d;
+        }
+        
+        .welcome-screen h2 {
+            font-size: 1.8rem;
+            color: #1F4E78;
+            margin-bottom: 15px;
+        }
+        
+        .welcome-screen p {
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Comprehensive Financial Planner</h1>
+            <p>Calculate your retirement readiness & financial health</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Input Panel -->
+            <div class="input-panel">
+                <div class="input-section">
+                    <h3>👤 Personal Information</h3>
+                    <div class="input-group">
+                        <label>Your Name</label>
+                        <input type="text" id="name" placeholder="Enter your name">
+                    </div>
+                    <div class="input-group">
+                        <label>Current Age</label>
+                        <input type="number" id="currentAge" placeholder="e.g., 40">
+                    </div>
+                    <div class="input-group">
+                        <label>Retirement Age</label>
+                        <input type="number" id="retirementAge" placeholder="e.g., 60">
+                    </div>
+                </div>
+
+                <div class="input-section">
+                    <h3>💵 Income Details</h3>
+                    <div class="input-group">
+                        <label>Annual Salary (₹)</label>
+                        <input type="number" id="annualSalary" placeholder="e.g., 5000000">
+                    </div>
+                    <div class="input-group">
+                        <label>Expected Salary Growth (%/year)</label>
+                        <input type="number" id="salaryGrowth" value="10">
+                    </div>
+                    <div class="input-group">
+                        <label>Salary Cap (₹)</label>
+                        <input type="number" id="salaryCap" placeholder="e.g., 30000000">
+                    </div>
+                </div>
+
+                <div class="input-section">
+                    <h3>💼 Current Assets</h3>
+                    <div class="input-group">
+                        <label>Total Investment Portfolio (₹)</label>
+                        <input type="number" id="currentPortfolio" placeholder="Stocks, MF, etc.">
+                    </div>
+                    <div class="input-group">
+                        <label>Bank Balance / Emergency Fund (₹)</label>
+                        <input type="number" id="bankBalance" placeholder="Current liquid cash">
+                    </div>
+                    <div class="input-group">
+                        <label>Retirement Corpus (EPF/NPS/PPF) (₹)</label>
+                        <input type="number" id="retirementCorpus" placeholder="e.g., 3000000">
+                    </div>
+                </div>
+
+                <div class="input-section">
+                    <h3>🏠 Home Loan (if any)</h3>
+                    <div class="input-group">
+                        <label>Outstanding Loan Amount (₹)</label>
+                        <input type="number" id="homeLoan" placeholder="0 if no loan">
+                    </div>
+                    <div class="input-group">
+                        <label>Interest Rate (%)</label>
+                        <input type="number" step="0.1" id="homeLoanRate" placeholder="e.g., 7.5">
+                    </div>
+                    <div class="input-group">
+                        <label>Monthly EMI (₹)</label>
+                        <input type="number" id="homeLoanEMI" placeholder="Current EMI">
+                    </div>
+                    <div class="input-group">
+                        <label>Annual Prepayment (₹)</label>
+                        <input type="number" id="homeLoanPrepay" placeholder="0 if none">
+                    </div>
+                </div>
+
+                <div class="input-section">
+                    <h3>🛡️ Insurance Coverage</h3>
+                    <div class="input-group">
+                        <label>Current Life Insurance (₹)</label>
+                        <input type="number" id="lifeInsurance" placeholder="Total coverage">
+                    </div>
+                    <div class="input-group">
+                        <label>Monthly Insurance Premium (₹)</label>
+                        <input type="number" id="insurancePremium" placeholder="All policies">
+                    </div>
+                </div>
+
+                <div class="input-section">
+                    <h3>📊 Monthly Expenses</h3>
+                    <div class="input-group">
+                        <label>Regular Living Expenses (₹/month)</label>
+                        <input type="number" id="monthlyExpenses" placeholder="Food, utilities, etc.">
+                    </div>
+                    <div class="input-group">
+                        <label>Expense Inflation (%/year)</label>
+                        <input type="number" id="expenseInflation" value="8">
+                    </div>
+                    <div class="input-group">
+                        <label>Annual Education Costs (₹)</label>
+                        <input type="number" id="educationCost" placeholder="0 if not applicable">
+                    </div>
+                    <div class="input-group">
+                        <label>Annual Holiday Budget (₹)</label>
+                        <input type="number" id="holidayBudget" placeholder="Travel/vacations">
+                    </div>
+                </div>
+
+                <div class="input-section">
+                    <h3>📈 Investment Plans</h3>
+                    <div class="input-group">
+                        <label>Current Monthly SIP (₹)</label>
+                        <input type="number" id="monthlySIP" placeholder="e.g., 50000">
+                    </div>
+                    <div class="input-group">
+                        <label>SIP Step-up (%/year)</label>
+                        <input type="number" id="sipStepup" value="15">
+                    </div>
+                    <div class="input-group">
+                        <label>Expected SIP Return (%/year)</label>
+                        <input type="number" id="sipReturn" value="12">
+                    </div>
+                    <div class="input-group">
+                        <label>Direct Equity Return (%/year)</label>
+                        <input type="number" id="directEquityReturn" value="13">
+                    </div>
+                    <div class="input-group">
+                        <label>Real Estate Return (%/year)</label>
+                        <input type="number" id="realEstateReturn" value="8">
+                    </div>
+                    <div class="input-group">
+                        <label>Liquid/Debt Return (%/year)</label>
+                        <input type="number" id="liquidReturn" value="7">
+                    </div>
+                </div>
+
+                <div class="input-section">
+                    <h3>🎯 Financial Goals</h3>
+                    <div class="input-group">
+                        <label>Emergency Fund Target (₹)</label>
+                        <input type="number" id="emergencyTarget" placeholder="6 months expenses">
+                    </div>
+                    <div class="input-group">
+                        <label>Life Insurance Needed (₹)</label>
+                        <input type="number" id="insuranceNeeded" placeholder="10-15x annual income">
+                    </div>
+                </div>
+
+                <button class="calculate-btn" onclick="calculatePlan()">
+                    🚀 Calculate My Financial Plan
+                </button>
+            </div>
+
+            <!-- Output Panel -->
+            <div class="output-panel" id="outputPanel">
+                <div class="welcome-screen">
+                    <h2>Welcome to Financial Planner! 👋</h2>
+                    <p>Fill in your financial details on the left</p>
+                    <p>Then click <strong>"Calculate My Financial Plan"</strong></p>
+                    <p style="margin-top: 20px; font-size: 0.9rem; color: #999;">
+                        All data stays in your browser - nothing is sent to any server
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let activeTab = 'overview';
+        let results = null;
+
+        function formatCurrency(amount) {
+            if (!amount && amount !== 0) return '₹0';
+            if (amount >= 10000000) {
+                return `₹${(amount / 10000000).toFixed(2)} Cr`;
+            } else if (amount >= 100000) {
+                return `₹${(amount / 100000).toFixed(2)} L`;
+            } else {
+                return `₹${Math.round(amount).toLocaleString('en-IN')}`;
+            }
+        }
+
+        function getInputValue(id) {
+            const val = document.getElementById(id).value;
+            return parseFloat(val) || 0;
+        }
+
+        function calculatePlan() {
+            // Get all inputs
+            const inputs = {
+                name: document.getElementById('name').value || 'User',
+                currentAge: getInputValue('currentAge'),
+                retirementAge: getInputValue('retirementAge'),
+                annualSalary: getInputValue('annualSalary'),
+                salaryGrowth: getInputValue('salaryGrowth'),
+                salaryCap: getInputValue('salaryCap'),
+                currentPortfolio: getInputValue('currentPortfolio'),
+                bankBalance: getInputValue('bankBalance'),
+                retirementCorpus: getInputValue('retirementCorpus'),
+                homeLoan: getInputValue('homeLoan'),
+                homeLoanRate: getInputValue('homeLoanRate'),
+                homeLoanEMI: getInputValue('homeLoanEMI'),
+                homeLoanPrepay: getInputValue('homeLoanPrepay'),
+                lifeInsurance: getInputValue('lifeInsurance'),
+                insurancePremium: getInputValue('insurancePremium'),
+                monthlyExpenses: getInputValue('monthlyExpenses'),
+                expenseInflation: getInputValue('expenseInflation'),
+                educationCost: getInputValue('educationCost'),
+                holidayBudget: getInputValue('holidayBudget'),
+                monthlySIP: getInputValue('monthlySIP'),
+                sipStepup: getInputValue('sipStepup'),
+                sipReturn: getInputValue('sipReturn'),
+                directEquityReturn: getInputValue('directEquityReturn'),
+                realEstateReturn: getInputValue('realEstateReturn'),
+                liquidReturn: getInputValue('liquidReturn'),
+                emergencyTarget: getInputValue('emergencyTarget'),
+                insuranceNeeded: getInputValue('insuranceNeeded')
+            };
+
+            // Validation
+            if (inputs.currentAge === 0 || inputs.retirementAge === 0) {
+                alert('Please enter your age details');
+                return;
+            }
+            if (inputs.annualSalary === 0) {
+                alert('Please enter your annual salary');
+                return;
+            }
+
+            const years = inputs.retirementAge - inputs.currentAge;
+            
+            // Calculate projection
+            let projection = [];
+            let sipPortfolio = inputs.currentPortfolio;
+            let directEquity = 0;
+            let realEstate = 0;
+            let liquid = 0;
+            let salary = inputs.annualSalary;
+            let expenses = inputs.monthlyExpenses;
+            let loanBalance = inputs.homeLoan;
+            let education = inputs.educationCost;
+            
+            for (let year = 0; year <= years; year++) {
+                const age = inputs.currentAge + year;
+                
+                // Salary
+                if (year > 0 && salary < inputs.salaryCap) {
+                    salary = Math.min(salary * (1 + inputs.salaryGrowth / 100), inputs.salaryCap);
+                }
+                
+                // SIP
+                const monthlySIP = inputs.monthlySIP * Math.pow(1 + inputs.sipStepup / 100, year);
+                const annualSIP = monthlySIP * 12;
+                
+                // Expenses
+                if (year > 0) {
+                    expenses = expenses * (1 + inputs.expenseInflation / 100);
+                }
+                const annualExpenses = expenses * 12;
+                
+                // Loan
+                let annualEMI = 0;
+                if (loanBalance > 0) {
+                    annualEMI = inputs.homeLoanEMI * 12;
+                    const interest = loanBalance * (inputs.homeLoanRate / 100);
+                    const principal = annualEMI - interest + inputs.homeLoanPrepay;
+                    loanBalance = Math.max(0, loanBalance - principal);
+                }
+                
+                // Education
+                if (year <= 10 && year > 0) {
+                    education = education * 1.06;
+                } else if (year === 11) {
+                    education = education * 10;
+                } else if (year <= 14) {
+                    education = education * 5;
+                } else {
+                    education = 0;
+                }
+                
+                // Holidays
+                const holidays = year >= 3 ? inputs.holidayBudget : 0;
+                
+                // Insurance
+                const annualInsurance = inputs.insurancePremium * 12;
+                
+                // Surplus
+                const totalExpense = annualExpenses + annualEMI + inputs.homeLoanPrepay + education + holidays + annualSIP + annualInsurance;
+                const surplus = salary - totalExpense;
+                
+                // Investments
+                const directInv = surplus > 0 ? surplus * 0.5 : 0;
+                const realInv = surplus > 0 ? surplus * 0.3 : 0;
+                const liquidInv = surplus > 0 ? surplus * 0.2 : 0;
+                
+                // Portfolio growth
+                sipPortfolio = (sipPortfolio * (1 + inputs.sipReturn / 100)) + annualSIP;
+                directEquity = (directEquity * (1 + inputs.directEquityReturn / 100)) + directInv;
+                realEstate = (realEstate * (1 + inputs.realEstateReturn / 100)) + realInv;
+                liquid = (liquid * (1 + inputs.liquidReturn / 100)) + liquidInv;
+                
+                const total = sipPortfolio + directEquity + realEstate + liquid;
+                
+                projection.push({
+                    year, age, salary, monthlySIP, expenses, education, surplus,
+                    sipPortfolio, directEquity, realEstate, liquid, total, loanBalance
+                });
+            }
+            
+            const finalYear = projection[projection.length - 1];
+            const finalPortfolio = finalYear.total;
+            
+            // Retirement needs
+            const monthlyExpensesAt60 = finalYear.expenses + (inputs.holidayBudget * Math.pow(1.08, years) / 12);
+            const annualExpensesAt60 = monthlyExpensesAt60 * 12;
+            const corpusNeeded = annualExpensesAt60 / 0.04;
+            
+            const gap = finalPortfolio - corpusNeeded;
+            const gapPercent = (gap / corpusNeeded) * 100;
+            
+            // Calculate health score
+            let healthScore = 0;
+            
+            // Income (15 points)
+            healthScore += Math.min((inputs.annualSalary / 10000000) * 15, 15);
+            
+            // Savings rate (20 points)
+            const monthlySalary = inputs.annualSalary / 12;
+            const monthlySavings = inputs.monthlySIP + (finalYear.surplus > 0 ? finalYear.surplus / 12 : 0);
+            const savingsRate = (monthlySavings / monthlySalary) * 100;
+            healthScore += Math.min((savingsRate / 50) * 20, 20);
+            
+            // Asset score (20 points)
+            const totalAssets = inputs.currentPortfolio + inputs.bankBalance + inputs.retirementCorpus;
+            healthScore += Math.min((totalAssets / 20000000) * 20, 20);
+            
+            // Debt score (15 points)
+            const debtToAsset = inputs.homeLoan / (totalAssets + 1);
+            healthScore += Math.max(15 - (debtToAsset * 15), 0);
+            
+            // Emergency fund (15 points)
+            if (inputs.emergencyTarget > 0) {
+                healthScore += (inputs.bankBalance / inputs.emergencyTarget) * 15;
+            } else {
+                healthScore += 15; // Full points if no target set
+            }
+            
+            // Insurance (15 points)
+            if (inputs.insuranceNeeded > 0) {
+                healthScore += (inputs.lifeInsurance / inputs.insuranceNeeded) * 15;
+            } else {
+                healthScore += 15; // Full points if no target set
+            }
+            
+            healthScore = Math.round(Math.min(healthScore, 100));
+            
+            // Critical gaps
+            const emergencyGap = Math.max(0, inputs.emergencyTarget - inputs.bankBalance);
+            const insuranceGap = Math.max(0, inputs.insuranceNeeded - inputs.lifeInsurance);
+            
+            // Calculate net worth
+            const netWorth = totalAssets - inputs.homeLoan;
+            
+            results = {
+                inputs,
+                projection,
+                finalPortfolio,
+                corpusNeeded,
+                gap,
+                gapPercent,
+                healthScore,
+                monthlyExpensesAt60,
+                annualExpensesAt60,
+                emergencyGap,
+                insuranceGap,
+                savingsRate,
+                netWorth,
+                totalAssets
+            };
+            
+            renderResults();
+        }
+
+        function renderResults() {
+            if (!results) return;
+            
+            const outputPanel = document.getElementById('outputPanel');
+            
+            const html = `
+                <div class="tab-buttons">
+                    <button class="tab-btn ${activeTab === 'overview' ? 'active' : ''}" onclick="switchTab('overview')">
+                        📊 Overview
+                    </button>
+                    <button class="tab-btn ${activeTab === 'retirement' ? 'active' : ''}" onclick="switchTab('retirement')">
+                        🎯 Retirement
+                    </button>
+                    <button class="tab-btn ${activeTab === 'gaps' ? 'active' : ''}" onclick="switchTab('gaps')">
+                        🔴 Gaps
+                    </button>
+                    <button class="tab-btn ${activeTab === 'actions' ? 'active' : ''}" onclick="switchTab('actions')">
+                        ✅ Actions
+                    </button>
+                </div>
+                
+                <div id="tabContent"></div>
+            `;
+            
+            outputPanel.innerHTML = html;
+            renderTab();
+        }
+
+        function switchTab(tab) {
+            activeTab = tab;
+            renderResults();
+        }
+
+        function renderTab() {
+            const content = document.getElementById('tabContent');
+            
+            if (activeTab === 'overview') {
+                content.innerHTML = `
+                    <div class="metric-card">
+                        <h2>Financial Health Score</h2>
+                        <div class="value">${results.healthScore}/100</div>
+                        <div class="subtitle">
+                            ${results.healthScore >= 80 ? 'Excellent' : 
+                              results.healthScore >= 60 ? 'Good' : 
+                              results.healthScore >= 40 ? 'Fair' : 'Needs Improvement'}
+                        </div>
+                    </div>
+
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <h4>Current Net Worth</h4>
+                            <div class="amount">${formatCurrency(results.netWorth)}</div>
+                            <div class="description">Assets - Liabilities</div>
+                        </div>
+                        
+                        <div class="result-card">
+                            <h4>Total Assets</h4>
+                            <div class="amount">${formatCurrency(results.totalAssets)}</div>
+                            <div class="description">All investments</div>
+                        </div>
+                        
+                        <div class="result-card">
+                            <h4>At Age ${results.inputs.retirementAge}</h4>
+                            <div class="amount">${formatCurrency(results.finalPortfolio)}</div>
+                            <div class="description">Projected portfolio</div>
+                        </div>
+                        
+                        <div class="result-card">
+                            <h4>Savings Rate</h4>
+                            <div class="amount">${results.savingsRate.toFixed(1)}%</div>
+                            <div class="description">Of monthly income</div>
+                        </div>
+                    </div>
+
+                    ${results.gap >= 0 ? `
+                        <div class="alert alert-success">
+                            <strong>✅ Retirement Status: ON TRACK</strong>
+                            <p>You'll have a surplus of ${formatCurrency(results.gap)} (${results.gapPercent.toFixed(1)}% over target)</p>
+                        </div>
+                    ` : `
+                        <div class="alert alert-warning">
+                            <strong>⚠️ Retirement Status: NEEDS ADJUSTMENT</strong>
+                            <p>Shortfall of ${formatCurrency(Math.abs(results.gap))} (${Math.abs(results.gapPercent).toFixed(1)}%)</p>
+                        </div>
+                    `}
+                `;
+            } else if (activeTab === 'retirement') {
+                const finalYear = results.projection[results.projection.length - 1];
+                content.innerHTML = `
+                    <h2 class="section-title">Retirement Projection</h2>
+                    
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <h4>Portfolio at ${results.inputs.retirementAge}</h4>
+                            <div class="amount">${formatCurrency(results.finalPortfolio)}</div>
+                            <div class="description">Total wealth</div>
+                        </div>
+                        
+                        <div class="result-card">
+                            <h4>Corpus Needed</h4>
+                            <div class="amount">${formatCurrency(results.corpusNeeded)}</div>
+                            <div class="description">25 years retirement</div>
+                        </div>
+                        
+                        <div class="result-card">
+                            <h4>Monthly Expenses</h4>
+                            <div class="amount">${formatCurrency(results.monthlyExpensesAt60)}</div>
+                            <div class="description">At age ${results.inputs.retirementAge}</div>
+                        </div>
+                        
+                        <div class="result-card">
+                            <h4>Annual Expenses</h4>
+                            <div class="amount">${formatCurrency(results.annualExpensesAt60)}</div>
+                            <div class="description">Per year</div>
+                        </div>
+                    </div>
+
+                    <h3 class="section-title" style="font-size: 1.2rem;">Portfolio Breakdown</h3>
+                    
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <h4>SIP/Mutual Funds</h4>
+                            <div class="amount">${formatCurrency(finalYear.sipPortfolio)}</div>
+                            <div class="description">${((finalYear.sipPortfolio / results.finalPortfolio) * 100).toFixed(0)}%</div>
+                        </div>
+                        
+                        <div class="result-card">
+                            <h4>Direct Equity</h4>
+                            <div class="amount">${formatCurrency(finalYear.directEquity)}</div>
+                            <div class="description">${((finalYear.directEquity / results.finalPortfolio) * 100).toFixed(0)}%</div>
+                        </div>
+                        
+                        <div class="result-card">
+                            <h4>Real Estate</h4>
+                            <div class="amount">${formatCurrency(finalYear.realEstate)}</div>
+                            <div class="description">${((finalYear.realEstate / results.finalPortfolio) * 100).toFixed(0)}%</div>
+                        </div>
+                        
+                        <div class="result-card">
+                            <h4>Liquid/Debt</h4>
+                            <div class="amount">${formatCurrency(finalYear.liquid)}</div>
+                            <div class="description">${((finalYear.liquid / results.finalPortfolio) * 100).toFixed(0)}%</div>
+                        </div>
+                    </div>
+                `;
+            } else if (activeTab === 'gaps') {
+                content.innerHTML = `
+                    <h2 class="section-title">Critical Gaps Analysis</h2>
+                    
+                    ${results.emergencyGap > 0 ? `
+                        <div class="alert alert-danger">
+                            <strong>🔴 URGENT: Emergency Fund Gap</strong>
+                            <p>Current: ${formatCurrency(results.inputs.bankBalance)} | Target: ${formatCurrency(results.inputs.emergencyTarget)}</p>
+                            <p><strong>Gap: ${formatCurrency(results.emergencyGap)} (${((results.emergencyGap / results.inputs.emergencyTarget) * 100).toFixed(0)}%)</strong></p>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${(results.inputs.bankBalance / results.inputs.emergencyTarget) * 100}%">
+                                    ${((results.inputs.bankBalance / results.inputs.emergencyTarget) * 100).toFixed(0)}%
+                                </div>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="alert alert-success">
+                            <strong>✅ Emergency Fund: Adequate</strong>
+                            <p>You have ${formatCurrency(results.inputs.bankBalance)} in emergency funds</p>
+                        </div>
+                    `}
+
+                    ${results.insuranceGap > 0 ? `
+                        <div class="alert alert-danger">
+                            <strong>🔴 URGENT: Life Insurance Gap</strong>
+                            <p>Current: ${formatCurrency(results.inputs.lifeInsurance)} | Needed: ${formatCurrency(results.inputs.insuranceNeeded)}</p>
+                            <p><strong>Gap: ${formatCurrency(results.insuranceGap)} (${((results.insuranceGap / results.inputs.insuranceNeeded) * 100).toFixed(0)}%)</strong></p>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${(results.inputs.lifeInsurance / results.inputs.insuranceNeeded) * 100}%">
+                                    ${((results.inputs.lifeInsurance / results.inputs.insuranceNeeded) * 100).toFixed(0)}%
+                                </div>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="alert alert-success">
+                            <strong>✅ Life Insurance: Adequate</strong>
+                            <p>You have ${formatCurrency(results.inputs.lifeInsurance)} in life insurance coverage</p>
+                        </div>
+                    `}
+
+                    ${results.emergencyGap > 0 || results.insuranceGap > 0 ? `
+                        <h3 class="section-title" style="font-size: 1.2rem; margin-top: 25px;">Why These Matter</h3>
+                        
+                        <div class="action-list">
+                            ${results.emergencyGap > 0 ? `
+                                <div class="action-item urgent">
+                                    <strong>Emergency Fund Risk</strong>
+                                    <p>Without adequate emergency fund, a medical emergency or job loss could force you to sell long-term investments at market lows, permanently destroying wealth.</p>
+                                </div>
+                            ` : ''}
+
+                            ${results.insuranceGap > 0 ? `
+                                <div class="action-item urgent">
+                                    <strong>Life Insurance Risk</strong>
+                                    <p>If something happened to you, your family would struggle with ${formatCurrency(results.inputs.homeLoan)} loan, lost income of ${formatCurrency(results.inputs.annualSalary)}/year, and ongoing expenses.</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    ` : ''}
+                `;
+            } else if (activeTab === 'actions') {
+                content.innerHTML = `
+                    <h2 class="section-title">Prioritized Action Plan</h2>
+                    
+                    <div class="action-list">
+                        <h3 style="margin-bottom: 12px; color: #dc3545;">🔴 URGENT (Next 30 Days)</h3>
+                        
+                        ${results.insuranceGap > 0 ? `
+                            <div class="action-item urgent">
+                                <strong>1. Get Life Insurance Quotes</strong>
+                                <p>Get quotes from 3 companies for ${formatCurrency(results.insuranceGap)} coverage. Compare premiums and claim settlement ratios.</p>
+                            </div>
+                        ` : ''}
+
+                        ${results.emergencyGap > 0 ? `
+                            <div class="action-item urgent">
+                                <strong>2. Start Emergency Fund</strong>
+                                <p>Open liquid fund account and start building ${formatCurrency(results.inputs.emergencyTarget)} emergency corpus. Allocate ${formatCurrency(results.emergencyGap / 12)}/month for 12 months.</p>
+                            </div>
+                        ` : ''}
+
+                        ${results.inputs.homeLoan > 0 && results.inputs.homeLoanPrepay > 0 ? `
+                            <div class="action-item urgent">
+                                <strong>3. Set Up Loan Prepayment</strong>
+                                <p>Visit bank and setup ${formatCurrency(results.inputs.homeLoanPrepay)} annual prepayment mandate. This saves interest and frees you early.</p>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="action-list">
+                        <h3 style="margin-bottom: 12px; color: #ffc107;">🟡 HIGH PRIORITY (Ongoing)</h3>
+                        
+                        <div class="action-item high">
+                            <strong>Continue SIP Discipline</strong>
+                            <p>Maintain ${formatCurrency(results.inputs.monthlySIP)}/month SIP with ${results.inputs.sipStepup}% annual step-up.</p>
+                        </div>
+
+                        <div class="action-item high">
+                            <strong>Tax Optimization</strong>
+                            <p>Maximize 80C (₹1.5L), 80D (₹50K), 80CCD(1B) (₹50K NPS). Potential savings: ₹3-5L/year.</p>
+                        </div>
+
+                        <div class="action-item high">
+                            <strong>Diversify Surplus</strong>
+                            <p>Allocate surplus: 50% direct equity (${results.inputs.directEquityReturn}%), 30% real estate (${results.inputs.realEstateReturn}%), 20% liquid/debt (${results.inputs.liquidReturn}%)</p>
+                        </div>
+
+                        <div class="action-item high">
+                            <strong>Review Every 6 Months</strong>
+                            <p>Review portfolio performance, rebalance if needed, adjust SIP amounts, check if on track for goals.</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
